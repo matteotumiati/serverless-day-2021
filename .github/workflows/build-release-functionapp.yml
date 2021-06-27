@@ -1,0 +1,40 @@
+name: Build and publish Azure Function
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '3.1.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    environment: dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - uses: azure/login@v1
+      name: 'Login'
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1.8.0
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }} 
+
+    - name: 'Build'
+      shell: pwsh
+      run: dotnet build --configuration Release --output ./output
+
+    - name: 'Deploy'
+      uses: azure/functions-action@v1.4.0
+      with:
+        app-name: 'serverlessday2021onclassicfunction'
+        package: './output'
+        # slot-name: green
