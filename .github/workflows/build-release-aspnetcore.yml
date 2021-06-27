@@ -1,0 +1,50 @@
+name: Build and publish ASP.NET Core on Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: serverlessday2021onappservice    
+  AZURE_WEBAPP_PACKAGE_PATH: '.'     
+  NUGET_VERSION: '5.10.x' 
+  DOTNET_VERSION: '5.0.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@main
+    
+    - uses: azure/login@v1
+      name: 'Login'
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Install NuGet
+      uses: nuget/setup-nuget@v1
+      with:
+        nuget-version: ${{ env.NUGET_VERSION }}
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1.8.0
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }} 
+
+    - name: dotnet restore
+      run: dotnet restore
+  
+    - name: dotnet build
+      run: dotnet build --configuration Release
+    
+    - name: dotnet publish
+      run:  dotnet publish -c Release -o '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/myapp' 
+                   
+    - name: 'Deploy'
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: ${{ env.AZURE_WEBAPP_NAME }} 
+        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/myapp/'
