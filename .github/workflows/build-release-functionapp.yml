@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-    - "FunctionAppClassicReleaseStrategy"
+    - "FunctionAppClassicReleaseStrategy/**"
   pull_request:
     branches: [ main ]
   workflow_dispatch:
