@@ -3,6 +3,8 @@ name: Build and publish ASP.NET Core on Azure App Service (Recreate)
 on:
   push:
     branches: [ main ]
+    paths:
+    - "AppServiceReleaseStrategy"
   pull_request:
     branches: [ main ]
   workflow_dispatch:
