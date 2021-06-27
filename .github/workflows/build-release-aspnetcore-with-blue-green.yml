@@ -1,4 +1,4 @@
-name: Build and publish ASP.NET Core on Azure App Service (Recreate)
+name: Build and publish ASP.NET Core on Azure App Service (Blue/Green)
 
 on:
   push:
@@ -55,3 +55,19 @@ jobs:
       with: 
         app-name: 'serverlessday2021onappservice' 
         package: './AppServiceReleaseStrategy/myapp/'
+        slot-name: 'green'
+
+  swap:
+    runs-on: ubuntu-latest
+    needs: [ build-and-deploy ]
+    steps:
+
+    - uses: azure/login@v1
+      name: 'Login'
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Swap to production
+      uses: Azure/cli@1.0.4
+      with:
+        inlineScript: az webapp deployment slot swap --name serverlessday2021onappservice --resource-group 'RG-SERVERLESS-DAY-2021' --slot green --target-slot production
