@@ -7,9 +7,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: serverlessday2021onappservice    
-  AZURE_WEBAPP_PACKAGE_PATH: '.'     
+env:    
   NUGET_VERSION: '5.10.x' 
   DOTNET_VERSION: '5.0.x'
 
@@ -17,7 +15,10 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@main
+    - name: Checkout
+      uses: actions/checkout@main
+      with:
+        fetch-depth: 0
     
     - uses: azure/login@v1
       name: 'Login'
@@ -34,17 +35,29 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }} 
 
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.7
+      with:
+        versionSpec: '5.x'
+
+    - name: Calculate Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.7
+
     - name: dotnet restore
-      run: dotnet restore
+      run: dotnet restore   
+      working-directory: ./AppServiceReleaseStrategy 
   
     - name: dotnet build
       run: dotnet build --configuration Release
+      working-directory: ./AppServiceReleaseStrategy 
     
     - name: dotnet publish
-      run:  dotnet publish -c Release -o '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/myapp' 
+      run:  dotnet publish -c Release -o './myapp' /p:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} /p:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.Sha }}
+      working-directory: ./AppServiceReleaseStrategy 
                    
     - name: 'Deploy'
       uses: azure/webapps-deploy@v2
       with: 
-        app-name: ${{ env.AZURE_WEBAPP_NAME }} 
-        package: '${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/myapp/'
+        app-name: 'serverlessday2021onappservice' 
+        package: './AppServiceReleaseStrategy/myapp/'
